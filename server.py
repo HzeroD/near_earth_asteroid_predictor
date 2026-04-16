@@ -3,6 +3,11 @@ import pydantic
 from fastapi import FastAPI
 import pandas as pd
 import numpy as np
+import logging
+
+logging.basicConfig(level= logging.INFO(),
+                    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+                    handlers= [logging.FileHandler('app.log'), logging.StreamHandler()])
 
 
 app = FastAPI()
@@ -42,6 +47,36 @@ class neaFeatures(pydantic.BaseModel):
     condition_code: float
     data_arc: float
 
+with open('./artifacts/best_model.pkl', 'rb') as file:
+    model = joblib.load(file)
+
+with open('./artifacts/best_model_columntransformer.pkl', 'rb') as file:
+    column_transformer = joblib.load(file)
+
+print(model)
+
+
+@app.get('/')
+def home():
+    return {"Welcome to the Near Earth Asteroid Hazard Prediction Service"}
+
+@app.predict('/predict_potential_hazard')
+def potential_hazard(features: neaFeatures):
+    logging.info(f"Received features {features}")
+
+    try:
+        df = pd.DataFrame([features.model_dump()])
+
+        X = column_transformer(df)
+        logging.debug(f"X.shape: {X.shape}")
+
+        prediction = model.predict(X)
+
+        return {"prediction": prediction}
+    
+    except Exception as e:
+        logging.error(f"Error making prediction: {e}")
+        return {f"Error making prediction"}
 
 
 
