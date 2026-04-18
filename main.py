@@ -37,8 +37,6 @@ class neaFeatures(BaseModel):
     H: float
     diameter_km: float
     size_category: str
-    albedo: float
-    rot_per_h: float
     class_code: str
     eccentricity: float
     semimajor_axis_au: float
