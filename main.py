@@ -112,6 +112,7 @@ with open('./artifacts/best_model_columntransformer.pkl', 'rb') as bm_trans, \
 print(model_pha)
 
 
+
 @app.get('/')
 def home():
     return {"Welcome to the Near Earth Asteroid Hazard Prediction Service"}
