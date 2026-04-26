@@ -1,0 +1,61 @@
+steps:
+  # Step 1: Run tests
+  - name: 'gcr.io/cloud-builders/python'
+    entrypoint: bash
+    args:
+      - -c
+      - |
+        python -m pip install --upgrade pip
+        pip install -e .[dev]
+        pytest --cov=. --cov-report=term-missing
+    id: 'run-tests'
+
+  # Step 2: Build Docker image
+  - name: 'gcr.io/cloud-builders/docker'
+    args:
+      - build
+      - '-t'
+      - '${_GAR_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPOSITORY}/${_IMAGE}:${SHORT_SHA}'
+      - '-t'
+      - '${_GAR_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPOSITORY}/${_IMAGE}:latest'
+      - '.'
+    id: 'build-image'
+    waitFor: ['run-tests']
+
+  # Step 3: Push to Artifact Registry
+  - name: 'gcr.io/cloud-builders/docker'
+    args:
+      - push
+      - '${_GAR_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPOSITORY}/${_IMAGE}:${SHORT_SHA}'
+    id: 'push-image'
+
+  # Step 4: Deploy to Cloud Run
+  - name: 'gcr.io/cloud-builders/run'
+    args:
+      - deploy
+      - ${_SERVICE_NAME}
+      - '--image=${_GAR_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPOSITORY}/${_IMAGE}:${SHORT_SHA}'
+      - '--platform=managed'
+      - '--region=${_REGION}'
+      - '--allow-unauthenticated'
+      - '--memory=2Gi'
+      - '--timeout=3600'
+    id: 'deploy-cloud-run'
+    waitFor: ['push-image']
+
+images:
+  - '${_GAR_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPOSITORY}/${_IMAGE}:${SHORT_SHA}'
+  - '${_GAR_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPOSITORY}/${_IMAGE}:latest'
+
+substitutions:
+  _GAR_REGION: 'us-central1'
+  _REPOSITORY: 'near-earth-asteroid-predictor'
+  _IMAGE: 'near-earth-asteroid-predictor'
+  _SERVICE_NAME: 'near-earth-asteroid-predictor'
+  _REGION: 'us-central1'
+
+options:
+  logging: CLOUD_LOGGING_ONLY
+  machineType: 'N1_HIGHCPU_8'
+
+timeout: '7200s'
