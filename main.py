@@ -5,13 +5,50 @@ import pandas as pd
 import numpy as np
 import logging
 from fastapi.exceptions import RequestValidationError
+from contextlib import asynccontextmanager
+
+from uvicorn import lifespan
 
 logging.basicConfig(level= logging.INFO,
                     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
                     handlers= [logging.FileHandler('app.log'), logging.StreamHandler()])
 
+# Global model variables
+model_pha = None
+model_moid = None
+model_abs_mag = None
+column_transformer_pha = None
+column_transformer_moid = None
+column_transformer_mag = None
 
-app = FastAPI()
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Startup: Load models
+    global model_pha, model_moid, model_abs_mag
+    global column_transformer_pha, column_transformer_moid, column_transformer_mag
+    
+    try:
+        with open('./artifacts/best_model.pkl', 'rb') as best_model,\
+             open('./artifacts/moid_best_model.pkl', 'rb') as moid_best_model,\
+             open('./artifacts/best_model_abs_mag.pkl', 'rb') as mag_best_model:
+            model_pha = joblib.load(best_model)
+            model_moid = joblib.load(moid_best_model)
+            model_abs_mag = joblib.load(mag_best_model)
+
+        with open('./artifacts/best_model_columntransformer.pkl', 'rb') as bm_trans, \
+             open('./artifacts/column_transformer_moid.pkl', 'rb') as bm_moid_trans, \
+             open('./artifacts/column_transformer_abs_mag.pkl', 'rb') as bm_mag_trans:
+            column_transformer_pha = joblib.load(bm_trans)
+            column_transformer_moid = joblib.load(bm_moid_trans)
+            column_transformer_mag = joblib.load(bm_mag_trans)
+        
+        print(model_pha)
+    except FileNotFoundError as e:
+        logging.warning(f"Model files not found during startup: {e}")
+
+
+app = FastAPI(lifespan=lifespan)
 
 
 
@@ -95,19 +132,7 @@ class neaFeatures_Mag(BaseModel):
     v_rel_kmh: float
     is_future: int
 
-with open('./artifacts/best_model.pkl', 'rb') as best_model,\
-     open('./artifacts/moid_best_model.pkl', 'rb') as moid_best_model,\
-     open('./artifacts/best_model_abs_mag.pkl', 'rb') as mag_best_model:
-    model_pha = joblib.load(best_model)
-    model_moid = joblib.load(moid_best_model)
-    model_abs_mag = joblib.load(mag_best_model)
 
-with open('./artifacts/best_model_columntransformer.pkl', 'rb') as bm_trans, \
-     open('./artifacts/column_transformer_moid.pkl', 'rb') as bm_moid_trans, \
-     open('./artifacts/column_transformer_abs_mag.pkl', 'rb') as bm_mag_trans:
-    column_transformer_pha = joblib.load(bm_trans)
-    column_transformer_moid = joblib.load(bm_moid_trans)
-    column_transformer_mag = joblib.load(bm_mag_trans)
 
 print(model_pha)
 
