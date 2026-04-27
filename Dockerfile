@@ -10,7 +10,7 @@ RUN pip install --no-cache-dir .
 
 COPY main.py .
 
-COPY ./artifacts ./artifacts
+COPY ./artifacts .
 
 EXPOSE 8000
 
