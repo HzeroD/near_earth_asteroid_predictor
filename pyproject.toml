@@ -12,6 +12,7 @@ dependencies = [
     "scikit-learn>=1.8.0",
     "uvicorn>=0.41.0",
     "dill>=0.4.1",
+    "gsutil==5.36",
 ]
 
 [project.optional-dependencies]
