@@ -92,12 +92,12 @@ gcloud iam workload-identity-pools create "github-pool" \
   --display-name="GitHub Pool"
 
 # Create Workload Identity Provider
-gcloud iam workload-identity-pools providers create-oidc "github-provider" \
+gcloud iam workload-identity-pools providers create-oidc github-provider \
   --project=$PROJECT_ID \
   --location=global \
-  --workload-identity-pool="github-pool" \
+  --workload-identity-pool=github-pool \
   --display-name="GitHub Provider" \
-  --attribute-mapping="google.subject=assertion.sub,assertion.aud=assertion.aud" \
+  --attribute-mapping="google.subject=assertion.sub" \
   --issuer-uri="https://token.actions.githubusercontent.com"
 
 # Get the provider resource name
@@ -121,8 +121,7 @@ export GITHUB_REPO="near_earth_asteroid_predictor"
 gcloud iam service-accounts add-iam-policy-binding $SA_EMAIL \
   --project=$PROJECT_ID \
   --role=roles/iam.workloadIdentityUser \
-  --condition="resource.matchTag('github/repo','$GITHUB_OWNER/$GITHUB_REPO')" \
-  --member="principalSet://iam.googleapis.com/$PROVIDER_RESOURCE_NAME/attribute.aud/aud"
+  --principal="principalSet://iam.googleapis.com/$PROVIDER_RESOURCE_NAME/google/subject"
 ```
 
 ---

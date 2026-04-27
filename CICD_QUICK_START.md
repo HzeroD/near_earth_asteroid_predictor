@@ -74,7 +74,7 @@ gcloud projects add-iam-policy-binding $PROJECT_ID \
   --role=roles/iam.serviceAccountUser
 
 # Set up Workload Identity Federation
-gcloud iam workload-identity-pools create "github-pool" \
+gcloud iam workload-identity-pools create "github-pool2" \
   --project=$PROJECT_ID \
   --location=global \
   --display-name="GitHub Pool"
@@ -82,22 +82,22 @@ gcloud iam workload-identity-pools create "github-pool" \
 gcloud iam workload-identity-pools providers create-oidc "github-provider" \
   --project=$PROJECT_ID \
   --location=global \
-  --workload-identity-pool="github-pool" \
+  --workload-identity-pool="github-pool2" \
   --display-name="GitHub Provider" \
-  --attribute-mapping="google.subject=assertion.sub,assertion.aud=assertion.aud" \
-  --issuer-uri="https://token.actions.githubusercontent.com"
+  --issuer-uri="https://token.actions.githubusercontent.com" \
+  --attribute-condition="attribute.repository=='HzeroD/near_earth_asteroid_prediction'"\
+  --attribute-mapping="google.subject=assertion.sub, attribute.aud=assertion.aud" 
+   
+  
 
 export PROVIDER_RESOURCE_NAME=$(gcloud iam workload-identity-pools providers describe "github-provider" \
   --project=$PROJECT_ID \
   --location=global \
-  --workload-identity-pool="github-pool" \
+  --workload-identity-pool="github-pool2" \
   --format='value(name)')
 
-gcloud iam service-accounts add-iam-policy-binding $SA_EMAIL \
-  --project=$PROJECT_ID \
-  --role=roles/iam.workloadIdentityUser \
-  --condition="resource.matchTag('github/repo','YOUR_GITHUB_ORG/YOUR_REPO')" \
-  --member="principalSet://iam.googleapis.com/$PROVIDER_RESOURCE_NAME/attribute.aud/aud"
+gcloud iam service-accounts add-iam-policy-binding $SA_EMAIL   --project=$PROJECT_ID   --role=roles/iam.workloadIdentityUser   --member="principalSet://iam.googleapis.com/projects/64675826330/locations/global/workloadIdentityPools/github
+-pool2/attribute.repository/google/subject"
 ```
 
 ### Step 2: GitHub Secrets (One-time)
