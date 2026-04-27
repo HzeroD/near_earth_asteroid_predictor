@@ -19,6 +19,10 @@ steps:
       - '-t'
       - '${_GAR_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPOSITORY}/${_IMAGE}:latest'
       - '.'
+
+    env:
+      - 'CLOUDSDK_COMPUTE_ZONE=us-central1'
+      - 'CLOUDSDK_PROJECT=${PROJECT_ID}'
     id: 'build-image'
     waitFor: ['run-tests']
 
