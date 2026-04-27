@@ -118,7 +118,7 @@ Add these secrets:
 git add .
 git commit -m "Add CI/CD pipeline"
 git push origin main
-j
+
 ```
 
 That's it! The pipeline will now:
