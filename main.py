@@ -140,7 +140,7 @@ print(model_pha)
 
 @app.get('/')
 def home():
-    return {"Welcome to the Near Earth Asteroid Hazard Prediction Service"}
+    return {"message":"Welcome to the Near Earth Asteroid Hazard Prediction Service"}
 
 @app.post('/predict_pha')
 def potential_hazard(features: neaFeatures_Pha):
@@ -157,39 +157,50 @@ def potential_hazard(features: neaFeatures_Pha):
         print(f"X: {X}")
         logging.debug(f"X.shape: {X.shape}")
 
-        prediction = model_pha.predict(X)
+        y_pred = model_pha.predict(X)
 
-        return {f"prediction: {prediction}"}
+        return {"pha_prediction":  y_pred.tolist() if hasattr(y_pred, 'tolist') else y_pred}
     
     except Exception as e:
         logging.error(f"Error making prediction: {e}")
-        return {f"Error making prediction"}
+        return {f"error": "Error making prediction"}
+    
     
 
 @app.post('/predict_moid')
 def predict_moid(features: neaFeatures_Moid):
     logging.info(f"Receaived features {features}")
+    try:
+        X = pd.DataFrame([features.model_dump()])
+        X_temp = column_transformer_moid.transform(X).tolist()
 
-    X = pd.DataFrame([features.model_dump()])
-    X_temp = column_transformer_moid.transform(X).tolist()
+        X_transformed = pd.DataFrame(X_temp, columns=[f"{col}" for col in column_transformer_moid.get_feature_names_out() ])
+        print(X_transformed)
+        y_pred = model_moid.predict(X_transformed)
 
-    X_transformed = pd.DataFrame(X_temp, columns=[f"{col}" for col in column_transformer_moid.get_feature_names_out() ])
-    print(X_transformed)
-    y_pred = model_moid.predict(X_transformed)
-
-    return {f"moid prediction in au: {y_pred}"}
+        return {"moid_prediction": y_pred.tolist() if hasattr(y_pred, 'tolist') else y_pred}
+    
+    except Exception as e:
+        logging.error(f"Error making prediction: {e}")
+        return {f"error": "Error making prediction"}
 
 
 @app.post('/predict_magnitude')
 def predict_magnitude(features: neaFeatures_Mag):
     logging.info(f"Received features {features}")
-
-    X = pd.DataFrame([features.model_dump()])
-    X_temp = column_transformer_mag.transform(X).tolist()
     
-    X_transformed = pd.DataFrame(X_temp, columns=[f"{col}" for col in column_transformer_mag.get_feature_names_out()])
+    try:
 
-    y_pred = model_abs_mag.predict(X_transformed)
+        X = pd.DataFrame([features.model_dump()])
+        X_temp = column_transformer_mag.transform(X).tolist()
+        
+        X_transformed = pd.DataFrame(X_temp, columns=[f"{col}" for col in column_transformer_mag.get_feature_names_out()])
 
-    return {f"Prediction for absolute magnitude: {y_pred}"}
+        y_pred = model_abs_mag.predict(X_transformed)
+
+        return {"magnitude_prediction": y_pred.tolist() if hasattr(y_pred, 'tolist') else y_pred}
+    
+    except Exception as e:
+        logging.error(f"Error making prediction: {e}")
+        return {f"error": "Error making prediction"}
 
