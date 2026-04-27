@@ -13,12 +13,12 @@ COPY main.py .
 
 
 RUN mkdir -p ./artifacts && \
-    gsutil cp gs://project-3e6b348d-e2ae-4a47-9af_cloudbuild/artifacts/best_model.pkl ./artifacts/ && \
-    gsutil cp gs://project-3e6b348d-e2ae-4a47-9af_cloudbuild/artifacts/best_model_columntransformer.pkl ./artifacts/ && \
-    gsutil cp gs://project-3e6b348d-e2ae-4a47-9af_cloudbuild/artifacts/moid_best_model.pkl ./artifacts/ && \
-    gsutil cp gs://project-3e6b348d-e2ae-4a47-9af_cloudbuild/artifacts/column_transformer_moid.pkl ./artifacts/ && \
-    gsutil cp gs://project-3e6b348d-e2ae-4a47-9af_cloudbuild/artifacts/best_model_abs_mag.pkl ./artifacts/ && \
-    gsutil cp gs://project-3e6b348d-e2ae-4a47-9af_cloudbuild/artifacts/column_transformer_abs_mag.pkl ./artifacts/
+    gcloud storage cp gs://project-3e6b348d-e2ae-4a47-9af_cloudbuild/artifacts/best_model.pkl ./artifacts/ && \
+    gcloud storage cp gs://project-3e6b348d-e2ae-4a47-9af_cloudbuild/artifacts/best_model_columntransformer.pkl ./artifacts/ && \
+    gcloud storage cp gs://project-3e6b348d-e2ae-4a47-9af_cloudbuild/artifacts/moid_best_model.pkl ./artifacts/ && \
+    gcloud storage cp gs://project-3e6b348d-e2ae-4a47-9af_cloudbuild/artifacts/column_transformer_moid.pkl ./artifacts/ && \
+    gcloud storage cp gs://project-3e6b348d-e2ae-4a47-9af_cloudbuild/artifacts/best_model_abs_mag.pkl ./artifacts/ && \
+    gcloud storage cp gs://project-3e6b348d-e2ae-4a47-9af_cloudbuild/artifacts/column_transformer_abs_mag.pkl ./artifacts/
 
 EXPOSE 8000
 
