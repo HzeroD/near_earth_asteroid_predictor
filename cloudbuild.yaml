@@ -10,6 +10,17 @@ steps:
         pytest --cov=. --cov-report=term-missing
     id: 'run-tests'
 
+
+  - name: Build Docker image
+    run: |
+    # Get the access token from WIF authentication
+     gcloud auth print-access-token > /tmp/access_token.txt
+    
+     docker build \
+       --build-arg GCP_ACCESS_TOKEN=$(cat /tmp/access_token.txt) \
+       -t "${{ env.GAR_LOCATION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.REPOSITORY }}/${{ env.IMAGE }}:${{ github.sha }}" \
+       -t "${{ env.GAR_LOCATION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.REPOSITORY }}/${{ env.IMAGE }}:latest" .
+
   # Step 2: Build Docker image
   - name: 'gcr.io/cloud-builders/docker'
     args:
