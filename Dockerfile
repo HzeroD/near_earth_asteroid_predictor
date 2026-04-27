@@ -1,5 +1,6 @@
 FROM python:3.13-slim
 
+
 WORKDIR /app
 
 COPY pyproject.toml .
@@ -9,6 +10,7 @@ RUN pip install --upgrade pip
 RUN pip install --no-cache-dir .
 
 COPY main.py .
+
 
 RUN mkdir -p ./artifacts && \
     gsutil cp gs://project-3e6b348d-e2ae-4a47-9af_cloudbuild/artifacts/best_model.pkl ./artifacts/ && \
