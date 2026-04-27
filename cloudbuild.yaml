@@ -11,6 +11,9 @@ steps:
     id: 'run-tests'
 
   # Step 2: Build Docker image
+  - name: 'gcr.io/cloud-builders/gsutil'
+    args: ['-m', 'cp', '-r', 'gs://project-3e6b348d-e2ae-4a47-9af_cloudbuild/artifacts', '.']
+
   - name: 'gcr.io/cloud-builders/docker'
     args:
       - build
