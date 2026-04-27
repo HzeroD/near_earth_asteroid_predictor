@@ -12,9 +12,10 @@ RUN pip install --no-cache-dir .
 
 COPY main.py .
 
+RUN mkdir -p ./artifacts
+
 FROM google/cloud-sdk:slim
-RUN --from=os mkdir -p ./artifacts && \
-    gcloud storage cp gs://project-3e6b348d-e2ae-4a47-9af_cloudbuild/artifacts/best_model.pkl ./artifacts/ && \
+RUN  gcloud storage cp gs://project-3e6b348d-e2ae-4a47-9af_cloudbuild/artifacts/best_model.pkl ./artifacts/ && \
     gcloud storage cp gs://project-3e6b348d-e2ae-4a47-9af_cloudbuild/artifacts/best_model_columntransformer.pkl ./artifacts/ && \
     gcloud storage cp gs://project-3e6b348d-e2ae-4a47-9af_cloudbuild/artifacts/moid_best_model.pkl ./artifacts/ && \
     gcloud storage cp gs://project-3e6b348d-e2ae-4a47-9af_cloudbuild/artifacts/column_transformer_moid.pkl ./artifacts/ && \
