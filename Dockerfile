@@ -1,5 +1,5 @@
 FROM python:3.13-slim
-FROM google/cloud-sdk:lite
+FROM google/cloud-sdk:slim
 
 
 WORKDIR /app
