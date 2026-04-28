@@ -12,7 +12,7 @@ COPY main.py .
 
 FROM google/cloud-sdk
 RUN gcloud config set account merkis.ruiz1992@gmail.com
-RUN gcloud auth
+RUN gcloud auth login
 RUN mkdir -p ./artifacts && \
     gcloud storage cp gs://project-3e6b348d-e2ae-4a47-9af_cloudbuild/artifacts/best_model.pkl ./artifacts/ && \
     gcloud storage cp gs://project-3e6b348d-e2ae-4a47-9af_cloudbuild/artifacts/best_model_columntransformer.pkl ./artifacts/ && \
