@@ -2,12 +2,8 @@ import joblib
 from pydantic import BaseModel
 from fastapi import FastAPI
 import pandas as pd
-import numpy as np
 import logging
-from fastapi.exceptions import RequestValidationError
 from contextlib import asynccontextmanager
-
-from uvicorn import lifespan
 
 logging.basicConfig(level= logging.INFO,
                     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
@@ -46,6 +42,7 @@ async def lifespan(app: FastAPI):
         print(model_pha)
     except FileNotFoundError as e:
         logging.warning(f"Model files not found during startup: {e}")
+    yield
 
 
 app = FastAPI(lifespan=lifespan)
@@ -203,4 +200,3 @@ def predict_magnitude(features: neaFeatures_Mag):
     except Exception as e:
         logging.error(f"Error making prediction: {e}")
         return {f"error": "Error making prediction"}
-
