@@ -12,6 +12,7 @@ env:
   REPOSITORY: near-earth-asteroid-predictor
   IMAGE: near-earth-asteroid-predictor
   REGION: us-central1
+  ARTIFACT_BUCKET: gs://project-3e6b348d-e2ae-4a47-9af_cloudbuild/artifacts
 
 jobs:
   test:
@@ -63,13 +64,21 @@ jobs:
     - name: Configure Docker to use gcloud as credential helper
       run: |
         gcloud auth configure-docker ${{ env.GAR_LOCATION }}-docker.pkg.dev
-       # gcloud config set account ${{ secret.WIF_SERVICE_ACCOUNT }}
-      #  gcloud iam service-accounts add-iam-policy-binding ${{ secrets.WIF_SERVICE_ACCOUNT}} --role=roles/storage.bucketViewer --member=${{ secrets.WIF_SERVICE_ACCOUNT}}
-    
+
+    - name: Download model artifacts from GCS
+      run: |
+        mkdir -p artifacts
+        gcloud storage cp "${{ env.ARTIFACT_BUCKET }}/best_model.pkl" ./artifacts/
+        gcloud storage cp "${{ env.ARTIFACT_BUCKET }}/best_model_columntransformer.pkl" ./artifacts/
+        gcloud storage cp "${{ env.ARTIFACT_BUCKET }}/moid_best_model.pkl" ./artifacts/
+        gcloud storage cp "${{ env.ARTIFACT_BUCKET }}/column_transformer_moid.pkl" ./artifacts/
+        gcloud storage cp "${{ env.ARTIFACT_BUCKET }}/best_model_abs_mag.pkl" ./artifacts/
+        gcloud storage cp "${{ env.ARTIFACT_BUCKET }}/column_transformer_abs_mag.pkl" ./artifacts/
+
     
     - name: Build Docker image
       run: |
-        docker build --build-arg MY_VARIABLE=${{ secrets.WIF_SERVICE_ACCOUNT }} -t "${{ env.GAR_LOCATION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.REPOSITORY }}/${{ env.IMAGE }}:${{ github.sha }}" \
+        docker build -t "${{ env.GAR_LOCATION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.REPOSITORY }}/${{ env.IMAGE }}:${{ github.sha }}" \
                      -t "${{ env.GAR_LOCATION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.REPOSITORY }}/${{ env.IMAGE }}:latest" .
     
     # - name: Push Docker image to Artifact Registry
