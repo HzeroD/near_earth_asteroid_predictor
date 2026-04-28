@@ -1,4 +1,4 @@
-name: CI - Test & Build
+name: CI/CD - Test, Build, and Deploy
 
 on:
   push:
@@ -11,6 +11,7 @@ env:
   GAR_LOCATION: us-central1
   REPOSITORY: near-earth-asteroid-predictor
   IMAGE: near-earth-asteroid-predictor
+  SERVICE: near-earth-asteroid-predictor
   REGION: us-central1
   ARTIFACT_BUCKET: gs://project-3e6b348d-e2ae-4a47-9af_cloudbuild/artifacts
 
@@ -79,16 +80,56 @@ jobs:
     - name: Build Docker image
       run: |
         docker build -t "${{ env.GAR_LOCATION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.REPOSITORY }}/${{ env.IMAGE }}:${{ github.sha }}" \
-                     -t "${{ env.GAR_LOCATION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.REPOSITORY }}/${{ env.IMAGE }}:latest" .
-    
-    # - name: Push Docker image to Artifact Registry
-    #   run: |
-    #     docker push "${{ env.GAR_LOCATION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.REPOSITORY }}/${{ env.IMAGE }}:${{ github.sha }}"
-    #     docker push "${{ env.GAR_LOCATION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.REPOSITORY }}/${{ env.IMAGE }}:latest"
-    
-    # - name: Notify - Image ready for deployment
-    #   run: |
-    #     echo "✅ Docker image built and pushed successfully!"
-    #     echo "📍 Image: ${{ env.GAR_LOCATION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.REPOSITORY }}/${{ env.IMAGE }}:${{ github.sha }}"
-    #     echo "🚀 To deploy, run:"
-    #     echo "gcloud run deploy near-earth-asteroid-predictor --image ${{ env.GAR_LOCATION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.REPOSITORY }}/${{ env.IMAGE }}:${{ github.sha }} --platform managed --region ${{ env.REGION }} --allow-unauthenticated"
+                     .
+
+    - name: Tag main branch image as latest
+      if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+      run: |
+        docker tag "${{ env.GAR_LOCATION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.REPOSITORY }}/${{ env.IMAGE }}:${{ github.sha }}" \
+                   "${{ env.GAR_LOCATION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.REPOSITORY }}/${{ env.IMAGE }}:latest"
+
+    - name: Push Docker image to Artifact Registry
+      if: github.event_name == 'push'
+      run: |
+        docker push "${{ env.GAR_LOCATION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.REPOSITORY }}/${{ env.IMAGE }}:${{ github.sha }}"
+
+    - name: Push latest tag for main
+      if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+      run: |
+        docker push "${{ env.GAR_LOCATION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.REPOSITORY }}/${{ env.IMAGE }}:latest"
+
+  deploy:
+    needs: build-and-push
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+      id-token: write
+
+    steps:
+    - name: Authenticate to Google Cloud
+      uses: google-github-actions/auth@v1
+      with:
+        workload_identity_provider: ${{ secrets.WIF_PROVIDER }}
+        service_account: ${{ secrets.WIF_SERVICE_ACCOUNT }}
+
+    - name: Set up Cloud SDK
+      uses: google-github-actions/setup-gcloud@v1
+
+    - name: Deploy to Cloud Run
+      run: |
+        gcloud run deploy "${{ env.SERVICE }}" \
+          --image "${{ env.GAR_LOCATION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.REPOSITORY }}/${{ env.IMAGE }}:${{ github.sha }}" \
+          --platform managed \
+          --region "${{ env.REGION }}" \
+          --project "${{ env.PROJECT_ID }}" \
+          --allow-unauthenticated
+
+    - name: Show deployed service URL
+      run: |
+        gcloud run services describe "${{ env.SERVICE }}" \
+          --platform managed \
+          --region "${{ env.REGION }}" \
+          --project "${{ env.PROJECT_ID }}" \
+          --format='value(status.url)'
