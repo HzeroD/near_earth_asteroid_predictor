@@ -5,7 +5,7 @@ We will use a dataset which compiles over 40,000 Near Earth Asteroids(NEA) and t
 
 -Miss Distance: predict Earth miss distance
 
--Size Estimation: predict diameter from absolute magnitude and albedo
+-Size Estimation: predict diameter frm absolute magnitude and albedo
 
 
 The following is a high-level overview of the project's expected trajectory assuming we only train a model for the hazard classification task, along with each step's expected completion time in days:
