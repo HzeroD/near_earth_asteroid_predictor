@@ -88,7 +88,7 @@ gcloud iam workload-identity-pools providers create-oidc "github-provider" \
   --display-name="GitHub Provider" \
   --issuer-uri="https://token.actions.githubusercontent.com" \
   --attribute-mapping="google.subject=assertion.sub,attribute.repository=assertion.repository,attribute.actor=assertion.actor,attribute.ref=assertion.ref" \
-  --attribute-condition="attribute.repository=='HzeroD/near_earth_asteroid_prediction'"
+  --attribute-condition="attribute.repository=='HzeroD/near_earth_asteroid_predictor'"
 
 export PROVIDER_RESOURCE_NAME=$(gcloud iam workload-identity-pools providers describe "github-provider" \
   --project=$PROJECT_ID \
@@ -99,7 +99,7 @@ export PROVIDER_RESOURCE_NAME=$(gcloud iam workload-identity-pools providers des
 gcloud iam service-accounts add-iam-policy-binding $SA_EMAIL \
   --project=$PROJECT_ID \
   --role=roles/iam.workloadIdentityUser \
-  --member="principalSet://iam.googleapis.com/projects/64675826330/locations/global/workloadIdentityPools/github-pool3/attribute.repository/HzeroD/near_earth_asteroid_prediction"
+  --member="principalSet://iam.googleapis.com/projects/64675826330/locations/global/workloadIdentityPools/github-pool3/attribute.repository/HzeroD/near_earth_asteroid_predictor"
 ```
 
 ### Step 2: GitHub Secrets (One-time)
