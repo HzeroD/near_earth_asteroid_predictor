@@ -63,6 +63,7 @@ jobs:
     - name: Configure Docker to use gcloud as credential helper
       run: |
         gcloud auth configure-docker ${{ env.GAR_LOCATION }}-docker.pkg.dev
+        gcloud config set account ${{ secret.WIF_SERVICE_ACCOUNT }}
       #  gcloud iam service-accounts add-iam-policy-binding ${{ secrets.WIF_SERVICE_ACCOUNT}} --role=roles/storage.bucketViewer --member=${{ secrets.WIF_SERVICE_ACCOUNT}}
         
     
