@@ -1,7 +1,7 @@
 ## Near Earth Asteroid Hazard/Size/Miss Predictor
 We will use a dataset which compiles over 40,000 Near Earth Asteroids(NEA) and their characteristics to predict feature labels like Hazard Classification, and we will deploy these trained models to GCP as a prediction service app. By project's end, our GCP endpoint will serve predictions from three models for the following features:
 
--Hazard Classification: predict if an asteroid is potentially hazardous from orbital and physical features
+-Hazard Classification: predict if an asteroid is potetially hazardous from orbital and physical features
 
 -Miss Distance: predict Earth miss distance
 
