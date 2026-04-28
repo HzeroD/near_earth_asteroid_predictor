@@ -10,8 +10,7 @@ RUN pip install --no-cache-dir .
 
 COPY main.py .
 
-ARG GCP_ACCESS_TOKEN
-
+FROM google/cloud-sdk
 RUN mkdir -p ./artifacts && \
     gcloud storage cp gs://project-3e6b348d-e2ae-4a47-9af_cloudbuild/artifacts/best_model.pkl ./artifacts/ && \
     gcloud storage cp gs://project-3e6b348d-e2ae-4a47-9af_cloudbuild/artifacts/best_model_columntransformer.pkl ./artifacts/ && \
