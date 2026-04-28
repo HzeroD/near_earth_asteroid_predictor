@@ -1,37 +1,76 @@
-## Near Earth Asteroid Hazard/Size/Miss Predictor
-We will use a dataset which compiles over 40,000 Near Earth Asteroids(NEA) and their characteristics to predict feature labels like Hazard Classification, and we will deploy these trained models to GCP as a prediction service app. By project's end, our GCP endpoint will serve predictions from three models for the following features:
+# Near Earth Asteroid Predictor
 
--Hazard Classification: predict if an asteroid is potetially hazardous from orbital and physical features
+This project uses a dataset of more than 40,000 near-Earth asteroids (NEAs) to train machine learning models for three prediction tasks:
 
--Miss Distance: predict Earth miss distance
+- `Hazard Classification`: predict whether an asteroid is potentially hazardous from orbital and physical features
+- `Miss Distance`: predict the asteroid's Earth miss distance
+- `Size Estimation`: estimate diameter from absolute magnitude and albedo-related inputs
 
--Size Estimation: predict diameter frm absolute magnitude and albedo
+The trained models are packaged behind a FastAPI service and prepared for deployment to Google Cloud Platform (GCP).
 
+## Project Goals
 
-The following is a high-level overview of the project's expected trajectory assuming we only train a model for the hazard classification task, along with each step's expected completion time in days:
+The long-term goal is to expose a cloud-hosted prediction API that serves all three models from a single application. The service is intended to support:
 
-#### Data Ingestion and Feature Engineering:
-- load data set `near_earth_asteroids_2025.csv` as a pandas dataframe
-- after dropping redundant features and being left with 14 `float` and 2 `str` columns: use scaling and one hot encoding during model training phase
-    
- ### Model Training:
-- due to the inbalanced target feature labels in `pha` we will use stratified k-fold cross-validation
-- to find the best model, we will use GridSearchCV
+- model inference through HTTP endpoints
+- health checks for deployment monitoring
+- containerized deployment with Docker
+- CI-based build validation for GCP delivery
 
-**Timeline: 2 days(3 days if adding testing and logging)**
+## Planned Workflow
 
-### Server File and Artifacts:
-- The file server.py will contain server functionality and is where we'll load our saved model and feature artifacts. The server will be based on FastAPI and to validate incoming data we'll use Pydantic
-- We'll implement three endpoints: "/" , "/predict", "/health"
+The outline below shows the expected project flow, starting with the hazard classification task as the initial baseline.
 
-**Timeline: 2 days**
+### 1. Data Ingestion and Feature Engineering
 
+- load `data/near_earth_asteroids_2025.csv` into a pandas DataFrame
+- remove redundant features
+- prepare numeric and categorical features for modeling
+- apply scaling and one-hot encoding during training
 
-### Docker and GCP deployment:
-- The previous files will be containerized as a docker container and deployed to Google Cloud Platform
+### 2. Model Training
 
-**Timeline: 2 days**
+- use stratified k-fold cross-validation for the imbalanced `pha` target
+- use `GridSearchCV` to compare candidate models and tune hyperparameters
+- persist the best model and preprocessing artifacts for inference
 
+Estimated time: `2 days`  
+With added testing and logging: `3 days`
 
-The above is a simple scaffolding for the prediction of a single feature and thus, the timelines are assuming a single model is being deployed. What we want are three models that predict three different features, meaning that all assumed timeline's may be doubled. **This gives the project an estimated time to completion of 14 days**. Of course, it may well be that some steps do not become much more complicated by the addition of other models, and so the estimated time to completion of 14 days  is considered a worst case scenario.
+### 3. API Service and Artifacts
 
+- serve predictions with FastAPI
+- load saved model artifacts from the application at runtime
+- validate requests with Pydantic
+- provide these endpoints:
+  - `/`
+  - `/predict`
+  - `/health`
+
+Estimated time: `2 days`
+
+### 4. Docker and GCP Deployment
+
+- package the application as a Docker image
+- prepare the service for Google Cloud deployment
+- integrate CI for test and build automation
+
+Estimated time: `2 days`
+
+## Estimated Timeline
+
+The estimates above assume a single deployed model for the initial hazard-classification workflow. Since the full project targets three separate prediction tasks, the overall effort may roughly double in the heavier phases.
+
+Estimated completion time: `14 days` worst case
+
+That estimate is intentionally conservative. Some work, especially API, deployment, and CI setup, can be shared across all three models and may not scale linearly.
+
+## Repository Notes
+
+This repository already includes:
+
+- training code in [train.py](/home/merkis/macaw_ml/near_earth_asteroid_predictor/train.py)
+- the API entrypoint in [main.py](/home/merkis/macaw_ml/near_earth_asteroid_predictor/main.py)
+- serialized model artifacts in [artifacts](/home/merkis/macaw_ml/near_earth_asteroid_predictor/artifacts)
+- CI configuration in [.github/workflows/ci.yml](/home/merkis/macaw_ml/near_earth_asteroid_predictor/.github/workflows/ci.yml)
+- containerization files in [Dockerfile](/home/merkis/macaw_ml/near_earth_asteroid_predictor/Dockerfile) and [docker-compose.yml](/home/merkis/macaw_ml/near_earth_asteroid_predictor/docker-compose.yml)
