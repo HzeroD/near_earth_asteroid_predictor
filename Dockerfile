@@ -10,7 +10,11 @@ RUN pip install --no-cache-dir .
 
 COPY main.py .
 
-FROM google/cloud-sdk
+ARG MY_VARIABLE
+ENV MY_VARIABLE=${MY_VARIABLE}
+
+RUN gcloud app update --service-account=MY_VARIABLE
+
 
 RUN mkdir -p ./artifacts && \
     gcloud storage cp gs://project-3e6b348d-e2ae-4a47-9af_cloudbuild/artifacts/best_model.pkl ./artifacts/ && \
