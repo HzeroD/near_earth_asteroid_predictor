@@ -8,7 +8,7 @@ This guide assumes the workload identity pool `github-pool2` already exists and 
 
 ### Files Created:
 
-1. **`.github/workflows/deploy.yml`**
+1. **`.github/workflows/cicd.yml`**
    - GitHub Actions workflow file
    - Automated testing, building, and deployment pipeline
    - Triggers on push to main/develop and pull requests
@@ -23,7 +23,7 @@ This guide assumes the workload identity pool `github-pool2` already exists and 
    - Optimizes Docker build context
    - Excludes unnecessary files from image
 
-4. **`CI_CD_SETUP.md`** (This file)
+4. **`docs/CICD_QUICK_START.md`** (This file)
    - Complete setup instructions for GCP
    - Step-by-step configuration guide
    - Troubleshooting tips
@@ -211,7 +211,7 @@ The Cloud Run service is configured with:
 - `MEMORY=2Gi`: Memory allocation (adjust as needed)
 - `TIMEOUT=3600`: Request timeout in seconds (1 hour)
 
-To add more environment variables, edit `.github/workflows/deploy.yml`:
+To add more environment variables, edit `.github/workflows/cicd.yml`:
 
 ```yaml
 --set-env-vars "LOG_LEVEL=INFO,NEW_VAR=value"

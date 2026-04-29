@@ -2,7 +2,8 @@ FROM python:3.13-slim AS os
 
 WORKDIR /app
 
-COPY pyproject.toml README.md main.py ./
+COPY pyproject.toml README.md ./
+COPY src ./src
 
 RUN pip install --upgrade pip
 
@@ -11,4 +12,4 @@ COPY artifacts/ ./artifacts/
 
 EXPOSE 8000
 
-CMD ["sh", "-c", "uvicorn main:app --host 0.0.0.0 --port ${PORT:-8000}"]
+CMD ["sh", "-c", "uvicorn near_earth_asteroid_predictor.api:app --host 0.0.0.0 --port ${PORT:-8000}"]

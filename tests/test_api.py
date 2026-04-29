@@ -10,13 +10,13 @@ Tests cover:
 
 import pytest
 from fastapi.testclient import TestClient
-import sys
-import os
 
-# Add parent directory to path for imports
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-
-from main import app, neaFeatures_Pha, neaFeatures_Moid, neaFeatures_Mag
+from near_earth_asteroid_predictor.api import (
+    app,
+    neaFeatures_Mag,
+    neaFeatures_Moid,
+    neaFeatures_Pha,
+)
 
 # ============================================================================
 # TEST CLIENT SETUP
