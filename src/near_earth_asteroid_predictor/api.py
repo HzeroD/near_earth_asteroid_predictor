@@ -161,6 +161,7 @@ def potential_hazard(features: neaFeatures_Pha):
     except Exception as e:
         logging.error(f"Error making prediction: {e}")
         return {f"error": "Error making prediction"}
+
     
     
 

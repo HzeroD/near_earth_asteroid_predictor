@@ -1,76 +1,104 @@
 # Near Earth Asteroid Predictor
 
-This project uses a dataset of more than 40,000 near-Earth asteroids (NEAs) to train machine learning models for three prediction tasks:
+This project trains and serves machine learning models for near-Earth asteroid prediction tasks. It uses a dataset of more than 40,000 asteroid records and exposes the trained models through a FastAPI application prepared for containerized deployment on Google Cloud Platform.
 
-- `Hazard Classification`: predict whether an asteroid is potentially hazardous from orbital and physical features
-- `Miss Distance`: predict the asteroid's Earth miss distance
-- `Size Estimation`: estimate diameter from absolute magnitude and albedo-related inputs
+## What the service predicts
 
-The trained models are packaged behind a FastAPI service and prepared for deployment to Google Cloud Platform (GCP).
+- `Hazard Classification`: whether an asteroid is potentially hazardous
+- `Miss Distance`: the asteroid's minimum orbit intersection distance with Earth
+- `Size Estimation`: diameter-related predictions based on magnitude and related features
 
-## Project Goals
+## Repository layout
 
-The long-term goal is to expose a cloud-hosted prediction API that serves all three models from a single application. The service is intended to support:
+The repository now follows a more standard application structure:
 
-- model inference through HTTP endpoints
-- health checks for deployment monitoring
-- containerized deployment with Docker
-- CI-based build validation for GCP delivery
+```text
+.
+├── .github/workflows/cicd.yml
+├── data/
+├── docs/
+│   └── CICD_QUICK_START.md
+├── notebooks/
+│   └── train.ipynb
+├── scripts/
+│   └── train.py
+├── src/
+│   └── near_earth_asteroid_predictor/
+│       ├── __init__.py
+│       └── api.py
+├── tests/
+│   ├── conftest.py
+│   ├── test_api.py
+│   └── README.md
+├── Dockerfile
+├── docker-compose.yml
+├── pyproject.toml
+└── pytest.ini
+```
 
-## Planned Workflow
+## Application structure
 
-The outline below shows the expected project flow, starting with the hazard classification task as the initial baseline.
+- application code lives in [src/near_earth_asteroid_predictor/api.py](/home/merkis/macaw_ml/near_earth_asteroid_predictor/src/near_earth_asteroid_predictor/api.py)
+- model training code lives in [scripts/train.py](/home/merkis/macaw_ml/near_earth_asteroid_predictor/scripts/train.py)
+- CI/CD setup notes live in [docs/CICD_QUICK_START.md](/home/merkis/macaw_ml/near_earth_asteroid_predictor/docs/CICD_QUICK_START.md)
+- API tests live in [tests/test_api.py](/home/merkis/macaw_ml/near_earth_asteroid_predictor/tests/test_api.py)
 
-### 1. Data Ingestion and Feature Engineering
+## Local development
 
-- load `data/near_earth_asteroids_2025.csv` into a pandas DataFrame
-- remove redundant features
-- prepare numeric and categorical features for modeling
-- apply scaling and one-hot encoding during training
+Install dependencies:
 
-### 2. Model Training
+```bash
+python -m pip install --upgrade pip
+pip install -e .[dev]
+```
 
-- use stratified k-fold cross-validation for the imbalanced `pha` target
-- use `GridSearchCV` to compare candidate models and tune hyperparameters
-- persist the best model and preprocessing artifacts for inference
+Run the API locally:
 
-Estimated time: `2 days`  
-With added testing and logging: `3 days`
+```bash
+uvicorn near_earth_asteroid_predictor.api:app --reload
+```
 
-### 3. API Service and Artifacts
+Run tests:
 
-- serve predictions with FastAPI
-- load saved model artifacts from the application at runtime
-- validate requests with Pydantic
-- provide these endpoints:
-  - `/`
-  - `/predict`
-  - `/health`
+```bash
+pytest
+```
 
-Estimated time: `2 days`
+Build the container locally:
 
-### 4. Docker and GCP Deployment
+```bash
+docker build -t near-earth-asteroid-predictor .
+```
 
-- package the application as a Docker image
-- prepare the service for Google Cloud deployment
-- integrate CI for test and build automation
+## CI/CD workflow
 
-Estimated time: `2 days`
+The GitHub Actions workflow is defined in [.github/workflows/cicd.yml](/home/merkis/macaw_ml/near_earth_asteroid_predictor/.github/workflows/cicd.yml).
 
-## Estimated Timeline
+It follows this deployment path:
 
-The estimates above assume a single deployed model for the initial hazard-classification workflow. Since the full project targets three separate prediction tasks, the overall effort may roughly double in the heavier phases.
+1. Pull requests into `main` run tests and container build validation.
+2. Pushes to `develop` run tests, build the image, and push a SHA-tagged image to Artifact Registry.
+3. Pushes to `main` run tests, build the image, push the SHA-tagged image, tag `latest`, and deploy that revision to Cloud Run.
 
-Estimated completion time: `14 days` worst case
+This lets the repository model a common team workflow:
 
-That estimate is intentionally conservative. Some work, especially API, deployment, and CI setup, can be shared across all three models and may not scale linearly.
+- feature branches for isolated work
+- pull requests for review and CI checks
+- `main` as the production deployment branch
 
-## Repository Notes
+## Deployment notes
 
-This repository already includes:
+- model artifacts are downloaded from Google Cloud Storage during the workflow before the Docker image is built
+- container images are pushed to Google Artifact Registry
+- production deployment targets Google Cloud Run
+- authentication is handled through Workload Identity Federation rather than long-lived service account keys
 
-- training code in [train.py](/home/merkis/macaw_ml/near_earth_asteroid_predictor/train.py)
-- the API entrypoint in [main.py](/home/merkis/macaw_ml/near_earth_asteroid_predictor/main.py)
-- serialized model artifacts in [artifacts](/home/merkis/macaw_ml/near_earth_asteroid_predictor/artifacts)
-- CI configuration in [.github/workflows/ci.yml](/home/merkis/macaw_ml/near_earth_asteroid_predictor/.github/workflows/ci.yml)
-- containerization files in [Dockerfile](/home/merkis/macaw_ml/near_earth_asteroid_predictor/Dockerfile) and [docker-compose.yml](/home/merkis/macaw_ml/near_earth_asteroid_predictor/docker-compose.yml)
+## Project status
+
+The project now has:
+
+- a packaged FastAPI application
+- endpoint tests for the prediction API
+- Docker-based runtime packaging
+- CI for validation
+- CD for Cloud Run deployment from `main`

@@ -16,7 +16,7 @@ import joblib
 import logging
 from datetime import datetime
 from sklearn.preprocessing import OneHotEncoder, StandardScaler
-from sklearn.impute import SimpleImputer # first ai correction needed, it tried importing this from preprocessing
+from sklearn.impute import SimpleImputer 
 from sklearn.compose import ColumnTransformer, make_column_selector
 from sklearn.pipeline import Pipeline, make_pipeline
 from sklearn.linear_model import LogisticRegression, LinearRegression

@@ -1,6 +1,6 @@
 # API Tests
 
-This directory contains unit and integration tests for the FastAPI server.
+This directory contains unit and integration tests for the FastAPI application.
 
 ## Test Coverage
 
@@ -46,19 +46,19 @@ pytest -v
 ### Run specific test file
 
 ```bash
-pytest tests/test_main.py -v
+pytest tests/test_api.py -v
 ```
 
 ### Run specific test class
 
 ```bash
-pytest tests/test_main.py::TestPhaPredictionEndpoint -v
+pytest tests/test_api.py::TestPhaPredictionEndpoint -v
 ```
 
 ### Run specific test function
 
 ```bash
-pytest tests/test_main.py::TestPhaPredictionEndpoint::test_predict_pha_valid_input_returns_200 -v
+pytest tests/test_api.py::TestPhaPredictionEndpoint::test_predict_pha_valid_input_returns_200 -v
 ```
 
 ### Run tests and show print statements
@@ -118,7 +118,7 @@ Verify that responses have expected structure and content.
 
 ## Notes
 
-- Tests require `main.py` and its dependencies to be importable
+- Tests require `src/near_earth_asteroid_predictor/api.py` and its dependencies to be importable
 - The tests use FastAPI's `TestClient` for synchronous testing
 - Model artifacts must be available for the server to start (for the actual predictions to work)
 - Some tests may fail if artifact files are missing, but validation tests will still pass
