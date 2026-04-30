@@ -25,21 +25,14 @@ async def lifespan(app: FastAPI):
     global column_transformer_pha, column_transformer_moid, column_transformer_mag
     
     try:
-        with open('./artifacts/best_model.pkl', 'rb') as best_model,\
-             open('./artifacts/moid_best_model.pkl', 'rb') as moid_best_model,\
-             open('./artifacts/best_model_abs_mag.pkl', 'rb') as mag_best_model:
-            model_pha = joblib.load(best_model)
-            model_moid = joblib.load(moid_best_model)
-            model_abs_mag = joblib.load(mag_best_model)
+            model_pha = joblib.load("../artifacts/best_model.pkl")
+            model_moid = joblib.load("../artifacts/moid_best_model.pkl")
+            model_abs_mag = joblib.load("../artifacts/best_model_abs_mag.pkl")
 
-        with open('./artifacts/best_model_columntransformer.pkl', 'rb') as bm_trans, \
-             open('./artifacts/column_transformer_moid.pkl', 'rb') as bm_moid_trans, \
-             open('./artifacts/column_transformer_abs_mag.pkl', 'rb') as bm_mag_trans:
-            column_transformer_pha = joblib.load(bm_trans)
-            column_transformer_moid = joblib.load(bm_moid_trans)
-            column_transformer_mag = joblib.load(bm_mag_trans)
+            column_transformer_pha = joblib.load("../artifacts/best_model_columntransformer.pkl")
+            column_transformer_moid = joblib.load("../artifacts/column_transformer_moid.pkl")
+            column_transformer_mag = joblib.load("../artifacts/column_transformer_abs_mag.pkl")
         
-        print(model_pha)
     except FileNotFoundError as e:
         logging.warning(f"Model files not found during startup: {e}")
     yield
@@ -48,24 +41,6 @@ async def lifespan(app: FastAPI):
 app = FastAPI(lifespan=lifespan)
 
 
-
-
-{"H",
- "diameter_km",
- "size_category",
- "albedo",
- "rot_per_h",
- "class_code",
- "eccentricity",
- "semimajor_axis_au",
- "inclination_deg",
- "perihelion_distance_au",
- "aphelion_distance_au",
- "orbital_period_days",
- "moid_au",
- "mean_motion_deg_day",
- "condition_code",
- "data_arc"}
 
 class neaFeatures_Pha(BaseModel):
     H: float
@@ -82,10 +57,7 @@ class neaFeatures_Pha(BaseModel):
     mean_motion_deg_day: float
     condition_code: float
     data_arc: float
-'{"pha":false,"H":13.82,"diameter_km":4.2,"size_category":"Large","class_code":"AMO",\
-    "eccentricity":0.5712,"semimajor_axis_au":2.474,"inclination_deg":9.4,"perihelion_distance_au":1.061,\
-        "aphelion_distance_au":3.89,"orbital_period_days":1420.0,"mean_motion_deg_day":0.2533,"condition_code":0.0,\
-            "data_arc":39281.0}'
+
 
 class neaFeatures_Moid(BaseModel):
     pha: int
@@ -103,11 +75,6 @@ class neaFeatures_Moid(BaseModel):
     condition_code: float
     data_arc: float
 
-'{"pha":false,"diameter_km":5.7,"size_category":"Large","class_code":"AMO",\
-    "eccentricity":0.5055,"semimajor_axis_au":2.149,"inclination_deg":23.96,\
-        "perihelion_distance_au":1.063,"aphelion_distance_au":3.24,"orbital_period_days":1150.0,"moid_au":0.0717,\
-            "mean_motion_deg_day":0.3128,"condition_code":0.0,"data_arc":26251.0,"distance_au":0.0896649063,\
-                "v_rel_kmh":52010.0,"is_future":true}'
 
 class neaFeatures_Mag(BaseModel):
     pha: int
@@ -128,11 +95,6 @@ class neaFeatures_Mag(BaseModel):
     distance_au: float
     v_rel_kmh: float
     is_future: int
-
-
-
-print(model_pha)
-
 
 
 @app.get('/')
@@ -156,7 +118,7 @@ def potential_hazard(features: neaFeatures_Pha):
 
         y_pred = model_pha.predict(X)
 
-        return {"pha_prediction":  y_pred.tolist() if hasattr(y_pred, 'tolist') else y_pred}
+        return {"pha_prediction":  y_pred}
     
     except Exception as e:
         logging.error(f"Error making prediction: {e}")
@@ -176,7 +138,7 @@ def predict_moid(features: neaFeatures_Moid):
         print(X_transformed)
         y_pred = model_moid.predict(X_transformed)
 
-        return {"moid_prediction": y_pred.tolist() if hasattr(y_pred, 'tolist') else y_pred}
+        return {"moid_prediction": y_pred}
     
     except Exception as e:
         logging.error(f"Error making prediction: {e}")
@@ -196,7 +158,7 @@ def predict_magnitude(features: neaFeatures_Mag):
 
         y_pred = model_abs_mag.predict(X_transformed)
 
-        return {"magnitude_prediction": y_pred.tolist() if hasattr(y_pred, 'tolist') else y_pred}
+        return {"magnitude_prediction": y_pred}
     
     except Exception as e:
         logging.error(f"Error making prediction: {e}")

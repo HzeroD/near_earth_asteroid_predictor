@@ -154,6 +154,8 @@ class TestPhaPredictionEndpoint:
         extra_features["extra_field"] = "should_be_ignored"
         response = client.post("/predict_pha", json=extra_features)
         assert response.status_code == 200
+
+   
     
     
 
