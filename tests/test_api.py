@@ -154,14 +154,20 @@ class TestPhaPredictionEndpoint:
         extra_features["extra_field"] = "should_be_ignored"
         response = client.post("/predict_pha", json=extra_features)
         assert response.status_code == 200
+
+    def test_predict_pha_negative_not_allowed(self):
+        neg_features = VALID_PHA_FEATURES.copy()
+        neg_features["eccentricity"] = -0.5
+        response = client.post("/predict_pha", json=neg_features)
+        assert response.status_code == 422
     
-    def test_predict_pha_negative_values_accepted(self):
-        """Test that negative numeric values are accepted (validation passes)."""
-        features_with_negative = VALID_PHA_FEATURES.copy()
-        features_with_negative["eccentricity"] = -0.5
-        response = client.post("/predict_pha", json=features_with_negative)
-        # Response should be 200 (Pydantic accepts it; model may handle or reject)
-        assert response.status_code == 200
+    # def test_predict_pha_negative_values_accepted(self):
+    #     """Test that negative numeric values are accepted (validation passes)."""
+    #     features_with_negative = VALID_PHA_FEATURES.copy()
+    #     features_with_negative["eccentricity"] = -0.5
+    #     response = client.post("/predict_pha", json=features_with_negative)
+    #     # Response should be 200 (Pydantic accepts it; model may handle or reject)
+    #     assert response.status_code == 200
 
 
 # ============================================================================
