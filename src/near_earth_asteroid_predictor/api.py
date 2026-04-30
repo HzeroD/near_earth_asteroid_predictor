@@ -25,13 +25,13 @@ async def lifespan(app: FastAPI):
     global column_transformer_pha, column_transformer_moid, column_transformer_mag
     
     try:
-            model_pha = joblib.load(model_pha)
-            model_moid = joblib.load(model_moid)
-            model_abs_mag = joblib.load(model_abs_mag)
+            model_pha = joblib.load("../artifacts/best_model.pkl")
+            model_moid = joblib.load("../artifacts/moid_best_model.pkl")
+            model_abs_mag = joblib.load("../artifacts/best_model_abs_mag.pkl")
 
-            column_transformer_pha = joblib.load(column_transformer_pha)
-            column_transformer_moid = joblib.load(column_transformer_moid)
-            column_transformer_mag = joblib.load(column_transformer_mag)
+            column_transformer_pha = joblib.load("../artifacts/best_model_columntransformer.pkl")
+            column_transformer_moid = joblib.load("../artifacts/column_transformer_moid.pkl")
+            column_transformer_mag = joblib.load("../artifacts/column_transformer_abs_mag.pkl")
         
     except FileNotFoundError as e:
         logging.warning(f"Model files not found during startup: {e}")
