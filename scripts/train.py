@@ -24,6 +24,8 @@ from sklearn.tree import DecisionTreeRegressor
 from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier, RandomForestRegressor, GradientBoostingRegressor
 from sklearn.model_selection import cross_val_score, StratifiedKFold, train_test_split, GridSearchCV
 from sklearn.metrics import f1_score, r2_score
+import os
+from google.cloud import storage
 
 # ============================================================================
 # CONFIGURATION
@@ -562,6 +564,28 @@ def main():
     
     # Save artifacts
     save_model_artifacts(model_pha, model_moid, model_magnitude)
+
+    def upload_local_directory(bucket_name, local_folder_path, gcs_folder_path=None):
+        client = storage.Client()
+        bucket = client.bucket(bucket_name)
+
+        for root, dirs, files in os.walk(local_folder_path):
+            for file in files:
+                local_file_path = os.path.join(root, file)
+                print(f"local_file_path: {local_file_path}")
+
+                relative_path = os.path.relpath(local_file_path, local_folder_path)
+                print(f"relative_path: {relative_path}")
+                gcs_destination = os.path.join(gcs_folder_path, relative_path ).replace("\\", "/")
+                print(f"gcs_destination: {gcs_destination}")
+
+                blob = bucket.blob(gcs_destination)
+                blob.upload_from_filename(local_file_path)
+                print(f"Uploaded {file} to {gcs_destination}")
+
+
+
+    upload_local_directory('project-3e6b348d-e2ae-4a47-9af_cloudbuild', '../artifacts','artifacts/')
     
     logger.info("\n" + "="*70)
     logger.info("Training pipeline completed successfully!")

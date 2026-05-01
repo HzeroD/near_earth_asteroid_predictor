@@ -1,6 +1,6 @@
 # Near Earth Asteroid Predictor
 
-This project uses a dataset of more than 40,000 near-Earth asteroids (NEAs) to train machine learning models for three prediction tasks:
+This project uses a [dataset](https://www.kaggle.com/datasets/darkmatternet/nasa-near-earth-asteroids-and-close-approaches) of more than 40,000 near-Earth asteroids (NEAs) to train machine learning models for three prediction tasks:
 
 - `Hazard Classification`: predict whether an asteroid is potentially hazardous from orbital and physical features
 - `Miss Distance`: predict the asteroid's Earth miss distance

@@ -38,13 +38,13 @@ async def lifespan(app: FastAPI):
     yield
 
 
-model_pha = joblib.load("../../artifacts/best_model.pkl")
-model_moid = joblib.load("../../artifacts/moid_best_model.pkl")
-model_abs_mag = joblib.load("../../artifacts/best_model_abs_mag.pkl")
+# model_pha = joblib.load("../../artifacts/best_model.pkl")
+# model_moid = joblib.load("../../artifacts/moid_best_model.pkl")
+# model_abs_mag = joblib.load("../../artifacts/best_model_abs_mag.pkl")
 
-column_transformer_pha = joblib.load("../../artifacts/best_model_columntransformer.pkl")
-column_transformer_moid = joblib.load("../../artifacts/column_transformer_moid.pkl")
-column_transformer_mag = joblib.load("../../artifacts/column_transformer_abs_mag.pkl")
+# column_transformer_pha = joblib.load("../../artifacts/best_model_columntransformer.pkl")
+# column_transformer_moid = joblib.load("../../artifacts/column_transformer_moid.pkl")
+# column_transformer_mag = joblib.load("../../artifacts/column_transformer_abs_mag.pkl")
 
 app = FastAPI(lifespan=lifespan)
 
