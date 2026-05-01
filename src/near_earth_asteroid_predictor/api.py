@@ -1,5 +1,5 @@
 import joblib
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from fastapi import FastAPI
 import pandas as pd
 import logging
@@ -38,62 +38,70 @@ async def lifespan(app: FastAPI):
     yield
 
 
+model_pha = joblib.load("../../artifacts/best_model.pkl")
+model_moid = joblib.load("../../artifacts/moid_best_model.pkl")
+model_abs_mag = joblib.load("../../artifacts/best_model_abs_mag.pkl")
+
+column_transformer_pha = joblib.load("../../artifacts/best_model_columntransformer.pkl")
+column_transformer_moid = joblib.load("../../artifacts/column_transformer_moid.pkl")
+column_transformer_mag = joblib.load("../../artifacts/column_transformer_abs_mag.pkl")
+
 app = FastAPI(lifespan=lifespan)
 
 
 
 class neaFeatures_Pha(BaseModel):
-    H: float
-    diameter_km: float
+    H: float = Field(ge=0.0)
+    diameter_km: float = Field(ge=0.0)
     size_category: str
     class_code: str
-    eccentricity: float
-    semimajor_axis_au: float
-    inclination_deg: float
-    perihelion_distance_au: float
-    aphelion_distance_au: float
-    orbital_period_days: float
-    moid_au: float
-    mean_motion_deg_day: float
-    condition_code: float
-    data_arc: float
+    eccentricity: float = Field(ge=0.0)
+    semimajor_axis_au: float = Field(ge=0.0)
+    inclination_deg: float = Field(ge=0.0)
+    perihelion_distance_au: float = Field(ge=0.0)
+    aphelion_distance_au: float = Field(ge=0.0)
+    orbital_period_days: float = Field(ge=0.0)
+    moid_au: float = Field(ge=0.0)
+    mean_motion_deg_day: float = Field(ge=0.0)
+    condition_code: float = Field(ge=0.0)
+    data_arc: float = Field(ge=0.0)
 
 
 class neaFeatures_Moid(BaseModel):
     pha: int
-    H: float
-    diameter_km: float
+    H: float = Field(ge=0.0)
+    diameter_km: float = Field(ge=0.0)
     size_category: str
     class_code: str
-    eccentricity: float
-    semimajor_axis_au: float
-    inclination_deg: float
-    perihelion_distance_au: float
-    aphelion_distance_au: float
-    orbital_period_days: float
-    mean_motion_deg_day: float
-    condition_code: float
-    data_arc: float
+    eccentricity: float = Field(ge=0.0)
+    semimajor_axis_au: float = Field(ge=0.0)
+    inclination_deg: float = Field(ge=0.0)
+    perihelion_distance_au: float = Field(ge=0.0)
+    aphelion_distance_au: float = Field(ge=0.0)
+    orbital_period_days: float = Field(ge=0.0)
+    mean_motion_deg_day: float = Field(ge=0.0)
+    condition_code: float = Field(ge=0.0)
+    data_arc: float = Field(ge=0.0)
 
 
 class neaFeatures_Mag(BaseModel):
     pha: int
-    H: float
-    diameter_km: float
+    H: float = Field(ge=0.0)
+    diameter_km: float = Field(ge=0.0)
     size_category: str
     class_code: str
-    eccentricity: float
-    semimajor_axis_au: float
-    inclination_deg: float
-    perihelion_distance_au: float
-    aphelion_distance_au: float
-    orbital_period_days: float
-    moid_au: float
-    mean_motion_deg_day: float
-    condition_code: float
-    data_arc: float
-    distance_au: float
-    v_rel_kmh: float
+    eccentricity: float = Field(ge=0.0)
+    semimajor_axis_au: float = Field(ge=0.0)
+    inclination_deg: float = Field(ge=0.0)
+    perihelion_distance_au: float = Field(ge=0.0)
+    aphelion_distance_au: float = Field(ge=0.0)
+    orbital_period_days: float = Field(ge=0.0)
+    moid_au: float = Field(ge=0.0)
+    mean_motion_deg_day: float = Field(ge=0.0)
+    condition_code: float = Field(ge=0.0)
+    data_arc: float = Field(ge=0.0)
+    distance_au: float = Field(ge=0.0)
+    v_rel_kmh: float = Field(ge=0.0)
     is_future: int
 
 
@@ -104,9 +112,8 @@ def home():
 @app.post('/predict_pha')
 def potential_hazard(features: neaFeatures_Pha):
     logging.info(f"Received features {features}")
-    print(pd.DataFrame([features.dict()]).loc[0])
     try:
-        print(features.model_dump())
+        #print(features.model_dump())
         df = pd.DataFrame([features.model_dump()])
         transformed_df = column_transformer_pha.transform(df).tolist()
 
@@ -115,10 +122,10 @@ def potential_hazard(features: neaFeatures_Pha):
         #df = pd.DataFrame(X)
         print(f"X: {X}")
         logging.debug(f"X.shape: {X.shape}")
-
+        print(model_pha)
         y_pred = model_pha.predict(X)
 
-        return {"pha_prediction":  y_pred}
+        return {"pha_prediction":  y_pred.tolist() if hasattr(y_pred, 'tolist') else y_pred}
     
     except Exception as e:
         logging.error(f"Error making prediction: {e}")
@@ -138,7 +145,7 @@ def predict_moid(features: neaFeatures_Moid):
         print(X_transformed)
         y_pred = model_moid.predict(X_transformed)
 
-        return {"moid_prediction": y_pred}
+        return {"moid_prediction": y_pred.tolist() if hasattr(y_pred, 'tolist') else y_pred}
     
     except Exception as e:
         logging.error(f"Error making prediction: {e}")
@@ -158,7 +165,7 @@ def predict_magnitude(features: neaFeatures_Mag):
 
         y_pred = model_abs_mag.predict(X_transformed)
 
-        return {"magnitude_prediction": y_pred}
+        return {"magnitude_prediction": y_pred.tolist() if hasattr(y_pred, 'tolist') else y_pred}
     
     except Exception as e:
         logging.error(f"Error making prediction: {e}")
