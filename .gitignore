@@ -7,7 +7,7 @@ sa-keys.json
 .agents
 
 /data/
-.codex
+*.codex
 
 
 
