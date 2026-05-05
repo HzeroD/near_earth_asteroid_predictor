@@ -4,4 +4,11 @@ __pycache__/
 artifacts/
 *.log
 sa-keys.json
+.agents
+data/
+.codex
+
+
+
+
 

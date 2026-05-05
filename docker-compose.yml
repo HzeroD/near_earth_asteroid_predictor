@@ -1,9 +1,0 @@
-version: '3.8'
-
-services:
-  app:
-    build: .
-    ports:
-      - "8000:8000"
-    environment:
-      - SERVICE_ACCOUNT=github-actions@project-3e6b348d-e2ae-4a47-9af.iam.gserviceaccount.com
