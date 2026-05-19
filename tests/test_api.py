@@ -67,7 +67,6 @@ VALID_MOID_FEATURES = {
 # Valid Magnitude features
 VALID_MAGNITUDE_FEATURES = {
     "pha": 0,
-    "H": 13.82,
     "diameter_km": 5.7,
     "size_category": "Large",
     "class_code": "AMO",

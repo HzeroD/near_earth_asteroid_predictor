@@ -14,9 +14,11 @@ class neaFeatures_Pha(BaseModel):
     orbital_period_days: float = Field(ge=0.0)
     moid_au: float = Field(ge=0.0)
     mean_motion_deg_day: float = Field(ge=0.0)
-    condition_code: float = Field(ge=0.0)
+    condition_code: int
     data_arc: float = Field(ge=0.0)
 
+class PhaBatch(BaseModel):
+    batch: list[neaFeatures_Pha]
 
 class neaFeatures_Moid(BaseModel):
     pha: int
@@ -37,7 +39,6 @@ class neaFeatures_Moid(BaseModel):
 
 class neaFeatures_Mag(BaseModel):
     pha: int
-    H: float = Field(ge=0.0)
     diameter_km: float = Field(ge=0.0)
     size_category: str
     class_code: str

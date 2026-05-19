@@ -3,12 +3,13 @@ __pycache__/
 .venv/
 artifacts/
 *.log
+src/near_earth_asteroid_predictor/logs/*.jsonl
+temp.py
 sa-keys.json
 .agents
 
 /data/
 *.codex
-
 
 
 
