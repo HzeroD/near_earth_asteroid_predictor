@@ -69,12 +69,11 @@ jobs:
     - name: Download model artifacts from GCS
       run: |
         mkdir -p artifacts
-        gcloud storage cp "${{ env.ARTIFACT_BUCKET }}/best_model.pkl" ./artifacts/
-        gcloud storage cp "${{ env.ARTIFACT_BUCKET }}/best_model_columntransformer.pkl" ./artifacts/
-        gcloud storage cp "${{ env.ARTIFACT_BUCKET }}/moid_best_model.pkl" ./artifacts/
-        gcloud storage cp "${{ env.ARTIFACT_BUCKET }}/column_transformer_moid.pkl" ./artifacts/
-        gcloud storage cp "${{ env.ARTIFACT_BUCKET }}/best_model_abs_mag.pkl" ./artifacts/
-        gcloud storage cp "${{ env.ARTIFACT_BUCKET }}/column_transformer_abs_mag.pkl" ./artifacts/
+        gcloud storage cp "${{ env.ARTIFACT_BUCKET }}/model_pha.pkl" ./artifacts/
+        gcloud storage cp "${{ env.ARTIFACT_BUCKET }}/columntransformer_pha.pkl" ./artifacts/
+        gcloud storage cp "${{ env.ARTIFACT_BUCKET }}/model_moid.pkl" ./artifacts/
+        gcloud storage cp "${{ env.ARTIFACT_BUCKET }}/columntransformer_moid.pkl" ./artifacts/
+        
 
     
     - name: Build Docker image
