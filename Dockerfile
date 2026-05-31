@@ -4,6 +4,8 @@ WORKDIR /app
 
 COPY pyproject.toml README.md ./
 COPY src ./src
+COPY scripts/batch_load_inference_logs.py ./scripts/batch_load_inference_logs.py
+COPY scripts/publish_drift_reports.py ./scripts/publish_drift_reports.py
 
 RUN pip install --upgrade pip
 

@@ -13,7 +13,6 @@ from fastapi.testclient import TestClient
 
 from near_earth_asteroid_predictor.api import (
     app,
-    neaFeatures_Mag,
     neaFeatures_Moid,
     neaFeatures_Pha,
 )
@@ -62,27 +61,6 @@ VALID_MOID_FEATURES = {
     "mean_motion_deg_day": 0.3128,
     "condition_code": 0.0,
     "data_arc": 26251.0
-}
-
-# Valid Magnitude features
-VALID_MAGNITUDE_FEATURES = {
-    "pha": 0,
-    "diameter_km": 5.7,
-    "size_category": "Large",
-    "class_code": "AMO",
-    "eccentricity": 0.5055,
-    "semimajor_axis_au": 2.149,
-    "inclination_deg": 23.96,
-    "perihelion_distance_au": 1.063,
-    "aphelion_distance_au": 3.24,
-    "orbital_period_days": 1150.0,
-    "moid_au": 0.0717,
-    "mean_motion_deg_day": 0.3128,
-    "condition_code": 0.0,
-    "data_arc": 26251.0,
-    "distance_au": 0.0896649063,
-    "v_rel_kmh": 52010.0,
-    "is_future": 1
 }
 
 # ============================================================================
@@ -200,50 +178,6 @@ class TestMoidPredictionEndpoint:
         del invalid_features["H"]
         response = client.post("/predict_moid", json=invalid_features)
         assert response.status_code == 422
-
-
-# ============================================================================
-# MAGNITUDE PREDICTION ENDPOINT TESTS
-# ============================================================================
-
-class TestMagnitudePredictionEndpoint:
-    """Tests for the absolute magnitude prediction endpoint."""
-    
-    def test_predict_magnitude_valid_input_returns_200(self):
-        """Test that valid magnitude input returns 200 status code."""
-        response = client.post("/predict_magnitude", json=VALID_MAGNITUDE_FEATURES)
-        assert response.status_code == 200
-    
-    def test_predict_magnitude_valid_input_returns_prediction(self):
-        """Test that valid magnitude input returns prediction in response."""
-        response = client.post("/predict_magnitude", json=VALID_MAGNITUDE_FEATURES)
-        assert response.status_code == 200
-        data = response.json()
-        assert isinstance(data, dict)
-        assert len(data) > 0
-    
-    def test_predict_magnitude_missing_required_field(self):
-        """Test that missing required field returns 422 validation error."""
-        invalid_features = VALID_MAGNITUDE_FEATURES.copy()
-        del invalid_features["distance_au"]  # Remove required field
-        response = client.post("/predict_magnitude", json=invalid_features)
-        assert response.status_code == 422
-    
-    def test_predict_magnitude_wrong_type_float_field(self):
-        """Test that providing non-float for float field returns 422 validation error."""
-        invalid_features = VALID_MAGNITUDE_FEATURES.copy()
-        invalid_features["distance_au"] = "invalid"  # Should be float
-        response = client.post("/predict_magnitude", json=invalid_features)
-        assert response.status_code == 422
-    
-    def test_predict_magnitude_wrong_type_is_future_field(self):
-        """Test that providing non-int for is_future returns 422 validation error."""
-        invalid_features = VALID_MAGNITUDE_FEATURES.copy()
-        invalid_features["is_future"] = "yes"  # Should be int
-        response = client.post("/predict_magnitude", json=invalid_features)
-        assert response.status_code == 422
-
-
 # ============================================================================
 # CROSS-ENDPOINT CONSISTENCY TESTS
 # ============================================================================
@@ -257,9 +191,6 @@ class TestEndpointConsistency:
         assert response.status_code == 405
         
         response = client.get("/predict_moid")
-        assert response.status_code == 405
-        
-        response = client.get("/predict_magnitude")
         assert response.status_code == 405
     
     def test_only_get_allowed_for_home_endpoint(self):
@@ -299,12 +230,6 @@ class TestPydanticModels:
         assert model.pha == 0
         assert model.H == 13.82
     
-    def test_magnitude_model_valid_creation(self):
-        """Test that valid data creates a neaFeatures_Mag model."""
-        model = neaFeatures_Mag(**VALID_MAGNITUDE_FEATURES)
-        assert model.is_future == 1
-        assert model.distance_au == 0.0896649063
-
 
 # ============================================================================
 # INTEGRATION TESTS
@@ -318,16 +243,13 @@ class TestIntegration:
         response = client.get("/")
         assert response.status_code == 200
     
-    def test_all_three_endpoints_functional(self):
-        """Test that all three prediction endpoints are functional with valid input."""
+    def test_prediction_endpoints_functional(self):
+        """Test that exposed prediction endpoints are functional with valid input."""
         pha_response = client.post("/predict_pha", json=VALID_PHA_FEATURES)
         assert pha_response.status_code == 200
         
         moid_response = client.post("/predict_moid", json=VALID_MOID_FEATURES)
         assert moid_response.status_code == 200
-        
-        mag_response = client.post("/predict_magnitude", json=VALID_MAGNITUDE_FEATURES)
-        assert mag_response.status_code == 200
     
     def test_predictions_have_reasonable_structure(self):
         """Test that predictions return data in expected structure."""
@@ -339,10 +261,6 @@ class TestIntegration:
         moid_response = client.post("/predict_moid", json=VALID_MOID_FEATURES)
         moid_data = moid_response.json()
         assert isinstance(moid_data, dict)
-        
-        mag_response = client.post("/predict_magnitude", json=VALID_MAGNITUDE_FEATURES)
-        mag_data = mag_response.json()
-        assert isinstance(mag_data, dict)
 
 
 # ============================================================================

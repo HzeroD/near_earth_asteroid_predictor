@@ -9,3 +9,4 @@ src/near_earth_asteroid_predictor.egg-info/dependency_links.txt
 src/near_earth_asteroid_predictor.egg-info/requires.txt
 src/near_earth_asteroid_predictor.egg-info/top_level.txt
 tests/test_api.py
+tests/test_monitoring.py

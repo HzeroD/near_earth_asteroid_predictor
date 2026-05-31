@@ -1,16 +1,18 @@
 Metadata-Version: 2.4
 Name: near_earth_asteroid_predictor
 Version: 0.1.0
-Summary: Predictions for Potentially Hazardous Asteroid, Minimum Orbit Intersection Distance, and Absolute Magnitude
+Summary: Predictions for Potentially Hazardous Asteroid and Minimum Orbit Intersection Distance
 Requires-Python: >=3.13
 Description-Content-Type: text/markdown
 Requires-Dist: fastapi>=0.131.0
-Requires-Dist: pandas>=3.0.1
+Requires-Dist: pandas==2.3.3
 Requires-Dist: pydantic>=2.12.5
 Requires-Dist: requests>=2.32.5
 Requires-Dist: scikit-learn>=1.8.0
 Requires-Dist: uvicorn>=0.41.0
 Requires-Dist: dill>=0.4.1
+Requires-Dist: google-cloud-bigquery>=3.39.0
+Requires-Dist: google-cloud-storage>=3.7.0
 Requires-Dist: gsutil==5.36
 Provides-Extra: dev
 Requires-Dist: pytest>=7.0.0; extra == "dev"

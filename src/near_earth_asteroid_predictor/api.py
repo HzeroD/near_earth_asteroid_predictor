@@ -3,98 +3,139 @@ import time
 import json
 import joblib
 import logging
+import uuid
 import pandas as pd
-from google.cloud.storage import Client, transfer_manager
-from pydantic import BaseModel, Field
-from schemas import neaFeatures_Pha, neaFeatures_Moid, neaFeatures_Mag, PhaBatch
+from .schemas import neaFeatures_Pha, neaFeatures_Moid, PhaBatch
 from datetime import datetime, timezone
 from pathlib import Path
 from fastapi import FastAPI
 from contextlib import asynccontextmanager
+from google.cloud import storage
+
+
+
 
 logging.basicConfig(level= logging.INFO,
                     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
                     handlers= [logging.FileHandler('app.log'), logging.StreamHandler()])
-# storage_client = Client()
-# bucket = storage_client.bucket("project-3e6b348d-e2ae-4a47-9af_cloudbuild")
-# print(bucket)
-#ARTIFACTS_PATH = Path("../artifacts").parent.mkdir(parents=True, exist_ok=True)
+
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 ARTIFACTS_PATH = Path(os.getenv("ARTIFACTS_PATH", PROJECT_ROOT / "artifacts")).resolve()
 ARTIFACTS_PATH.mkdir(parents=True, exist_ok=True)
-#ARTIFACTS_PATH.parent.parent.mkdir(parents=True, exist_ok=True)
-
-# print(ARTIFACTS_PATH)
-# results = transfer_manager.download_many_to_path(
-#     bucket = bucket,
-#     blob_names = ["best_model.pkl", "best_model_abs_mag.pkl", "best_model_columntransformer.pkl", "column_transformer_abs_mag.pkl", "column_transformer_moid.pkl", "moid_bbest_model.pkl"],
-#     destination_directory= ARTIFACTS_PATH,
-#     blob_name_prefix="artifacts/"
-# )
-
-# print(results)
-# print(Path(__file__).resolve().parents[2])
-
-
-
-
-
-
-
 
 # Inference logging path for monitoring
-INFERENCE_LOG_PATH = Path("./logs/inference_events.jsonl")
-INFERENCE_LOG_PATH_MOID = Path("./logs/inference_events_moid.jsonl")
+LOGS_PATH = Path(os.getenv("INFERENCE_LOG_DIR", "./logs"))
+INFERENCE_LOG_PATHS = {
+    "pha": LOGS_PATH / "inference_events_pha.jsonl",
+    "moid": LOGS_PATH / "inference_events_moid.jsonl",
+}
 
 
-# inference event logging function
+# inference event local logging function
 def log_inference_event(event: dict) -> None:
-    if event["model_name"] == "pha":
-        INFERENCE_LOG_PATH.parent.mkdir(parents=True, exist_ok=True)
-        with INFERENCE_LOG_PATH.open('a', encoding='utf-8') as f:
-            f.write(json.dumps(event, default=str) + "\n")
-    if event["model_name"] == "moid":
-        INFERENCE_LOG_PATH_MOID.parent.mkdir(parents=True, exist_ok=True)
-        with INFERENCE_LOG_PATH_MOID.open('a', encoding='utf-8') as f:
-            f.write(json.dumps(event, default=str) + "\n")
+    log_path = INFERENCE_LOG_PATHS.get(event.get("model_name"))
+    if log_path is None:
+        logging.warning("Skipping inference log for unknown model: %s", event.get("model_name"))
+        return
+
+    log_path.parent.mkdir(parents=True, exist_ok=True)
+    with log_path.open('a', encoding='utf-8') as f:
+        f.write(json.dumps(event, default=str) + "\n")
+
+
+
+INFERENCE_LOG_BUCKET = os.getenv("INFERENCE_LOG_BUCKET")
+INFERENCE_LOG_BUCKET_PHA = os.getenv("INFERENCE_LOG_BUCKET_PHA")
+INFERENCE_LOG_BUCKET_MOID = os.getenv("INFERENCE_LOG_BUCKET_MOID")
+INFERENCE_LOG_PREFIX = os.getenv("INFERENCE_LOG_PREFIX", "inference_logs")
+
+def write_inference_event_to_gcs(event: dict) -> None:
+    if not INFERENCE_LOG_BUCKET:
+        return
+    
+    _, log_name = INFERENCE_LOG_BUCKET.rsplit("/",1)
+    model_name = event.get("model_name","unknown")
+    blob_name = ""
+
+    if model_name == "pha":
+        timestamp = event.get("timestamp", datetime.now(timezone.utc).isoformat())
+        date_part = timestamp[:10]
+        blob_name = (
+            f"date={date_part}/" 
+            f"model={event.get("model_name", "unknown")}/"
+            f"{event.get("request_id")}.jsonl"
+        )
+    elif model_name == "moid":
+        if not INFERENCE_LOG_BUCKET_MOID:
+            return
+        timestamp = event.get("timestamp", datetime.now(timezone.utc).isoformat())
+        date_part = timestamp[:10]
+        blob_name = (
+            f"date={date_part}/"
+            f"model={event.get("model_name", "unknown")}/"
+            f"{model_name}.jsonl"
+        )
+    
+    bucket = storage.Client().bucket(INFERENCE_LOG_BUCKET)
+    blob = bucket.blob(blob_name)
+    blob.upload_from_string(
+        json.dumps(event, default=str) + "\n",
+        content_type="application/x-ndjson"
+    )
+
+# inference event local logging function
+def log_inference_event(event: dict) -> None:
+    log_path = INFERENCE_LOG_PATHS.get(event.get("model_name"))
+    if log_path is None:
+        logging.warning("Skipping inference log for unknown model: %s", event.get("model_name"))
+        return
+
+    log_path.parent.mkdir(parents=True, exist_ok=True)
+    with log_path.open('a', encoding='utf-8') as f:
+        f.write(json.dumps(event, default=str) + "\n")
+    
+    try:
+        write_inference_event_to_gcs()
+    except Exception:
+        logging.exception("Failed to write inference event to GCS")
+
+
+
+
 
 # Global model variables
 model_pha = None
 model_moid = None
-model_abs_mag = None
-column_transformer_pha = None
-column_transformer_moid = None
-column_transformer_mag = None
+columntransformer_pha = None
+columntransformer_moid = None
+
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Startup: Load model
-    global model_pha, model_moid, model_abs_mag
-    global column_transformer_pha, column_transformer_moid, column_transformer_mag
+    global model_pha, model_moid
+    global columntransformer_pha, columntransformer_moid
     
     try:
-            model_pha = joblib.load(ARTIFACTS_PATH / "best_model.pkl")
-            model_moid = joblib.load(ARTIFACTS_PATH / "moid_bbest_model.pkl")
-            model_abs_mag = joblib.load( ARTIFACTS_PATH / "best_model_abs_mag.pkl")
+        model_pha = joblib.load(ARTIFACTS_PATH / "best_model_pha.pkl")
+        model_moid = joblib.load(ARTIFACTS_PATH / "best_model_moid.pkl")
 
-            column_transformer_pha = joblib.load(ARTIFACTS_PATH / "best_model_columntransformer.pkl")
-            column_transformer_moid = joblib.load(ARTIFACTS_PATH / "column_transformer_moid.pkl")
-            column_transformer_mag = joblib.load(ARTIFACTS_PATH / "column_transformer_abs_mag.pkl")
-        
+        columntransformer_pha = joblib.load(ARTIFACTS_PATH / "columntransformer_pha.pkl")
+        columntransformer_moid = joblib.load(ARTIFACTS_PATH / "columntransformer_moid.pkl")
+
     except FileNotFoundError as e:
         logging.warning(f"Model files not found during startup: {e}")
+
     yield
 
-# The six commented lines below are to be uncommented when testing locally
+# The commented lines below are to be uncommented when testing locally
 
 # model_pha = joblib.load("../../artifacts/best_model.pkl")
 # model_moid = joblib.load("../../artifacts/moid_best_model.pkl")
-# model_abs_mag = joblib.load("../../artifacts/best_model_abs_mag.pkl")
 
 # column_transformer_pha = joblib.load("../../artifacts/best_model_columntransformer.pkl")
 # column_transformer_moid = joblib.load("../../artifacts/column_transformer_moid.pkl")
-# column_transformer_mag = joblib.load("../../artifacts/column_transformer_abs_mag.pkl")
 
 app = FastAPI(lifespan=lifespan)
 
@@ -105,7 +146,7 @@ def home():
     return {"message":"Welcome to the Near Earth Asteroid Hazard Prediction Service"}
 
 @app.post('/predict_pha')
-def potential_hazard(features: neaFeatures_Pha | list[neaFeatures_Pha]):
+def potential_hazard(features: neaFeatures_Pha):
 
     logging.info(f"Received features {features}")
     
@@ -124,9 +165,9 @@ def potential_hazard(features: neaFeatures_Pha | list[neaFeatures_Pha]):
 
     try:
         df = pd.DataFrame([features.model_dump()])
-        transformed_df = column_transformer_pha.transform(df).tolist()
+        transformed_df = columntransformer_pha.transform(df).tolist()
 
-        X = pd.DataFrame(transformed_df, columns=[f"{col}" for col in column_transformer_pha.get_feature_names_out()])
+        X = pd.DataFrame(transformed_df, columns=[f"{col}" for col in columntransformer_pha.get_feature_names_out()])
         logging.debug(f"X.shape: {X.shape}")
 
         y_pred = model_pha.predict(X)
@@ -168,9 +209,9 @@ def predict_pha_batch(features: list[neaFeatures_Pha]):\
 
         try:
             df = pd.DataFrame([f.model_dump()])
-            trans = column_transformer_pha.transform(df).tolist()
+            trans = columntransformer_pha.transform(df).tolist()
 
-            X = pd.DataFrame(trans, columns=[f"{col}" for col in column_transformer_pha.get_feature_names_out()])
+            X = pd.DataFrame(trans, columns=[f"{col}" for col in columntransformer_pha.get_feature_names_out()])
 
             y_pred = model_pha.predict(X)
             y_pred = y_pred.tolist() if hasattr(y_pred, 'tolist') else y_pred
@@ -210,9 +251,9 @@ def predict_moid(features: neaFeatures_Moid):
 
     try:
         df = pd.DataFrame([features.model_dump()])
-        df_transformed = column_transformer_moid.transform(df).tolist()
+        df_transformed = columntransformer_moid.transform(df).tolist()
 
-        X = pd.DataFrame(df_transformed, columns=[f"{col}" for col in column_transformer_moid.get_feature_names_out() ])
+        X = pd.DataFrame(df_transformed, columns=[f"{col}" for col in columntransformer_moid.get_feature_names_out() ])
         logging.debug(f"X.shape: {X.shape}")
 
         prediction = model_moid.predict(X)
@@ -253,14 +294,14 @@ def predict_moid_batch(features: list[neaFeatures_Moid]):
         }
 
         try:
-            print(type(f.model_dump()))
             df = pd.DataFrame([f.model_dump()])
-            df_transformed = column_transformer_moid.transform(df).tolist()
+            df_transformed = columntransformer_moid.transform(df).tolist()
 
-            X = pd.DataFrame(df_transformed, columns=[f"{col}" for col in column_transformer_moid.get_feature_names_out()])
+            X = pd.DataFrame(df_transformed, columns=[f"{col}" for col in columntransformer_moid.get_feature_names_out()])
             prediction = model_moid.predict(X)
             prediction = prediction.tolist() if hasattr(prediction, 'tolist') else prediction
             event["prediction"] = prediction
+            predictions.append(prediction)
             
         except Exception as e:
             logging.error(f"Error making prediction {e}")
@@ -272,48 +313,4 @@ def predict_moid_batch(features: list[neaFeatures_Moid]):
             log_inference_event(event)
             logging.info(f"Inference event logged")
         
-        return {"Moid Predictions: ": predictions}
-
-
-
-
-@app.post('/predict_magnitude')
-def predict_magnitude(features: neaFeatures_Mag):
-    #logging.info(f"Received features {features}")
-    started_at = time.perf_counter()
-    event = {
-        "timezone": datetime.now(timezone.utc).isoformat(),
-        "model_name": "magnitude",
-        "model_version": "local",
-        "features": features.model_dump(),
-        "prediction": None,
-        "status": "success",
-        "latency_ms": None,
-        "error": None,
-    }
-    
-    try:
-
-        df = pd.DataFrame([features.model_dump()])
-        transformed_df = column_transformer_mag.transform(df).tolist()
-        
-        X = pd.DataFrame(transformed_df, columns=[f"{col}" for col in column_transformer_mag.get_feature_names_out()])
-        print(f"MODEL_ABS_MAG: {column_transformer_mag.transform(df)}")
-        print(f"X: {X}")
-        y_pred = model_abs_mag.predict(X)
-        #y_pred = y_pred.tolist() if hasattr(y_pred, 'tolist') else y_pred
-        event["prediction"] = y_pred
-
-        return {"magnitude_prediction": round(y_pred[0], 2)}
-    
-    except Exception as e:
-        logging.error(f"Error making prediction: {e}")
-        event["status"] = "error"
-        event["error"] = type(e).__name__
-
-        return {f"error": "Error making prediction"}
-    
-    finally:
-        event["latency_ms"] = round(time.perf_counter() - started_at, 2)
-        log_inference_event(event)
-        logging.info(f"Logged inference event {event}")
+    return {"moid_predictions": predictions}

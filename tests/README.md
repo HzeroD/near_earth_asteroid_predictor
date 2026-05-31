@@ -9,7 +9,7 @@ This directory contains unit and integration tests for the FastAPI application.
 - **Home Endpoint** (`TestHomeEndpoint`): Tests the welcome endpoint
 - **PHA Prediction** (`TestPhaPredictionEndpoint`): Tests the potentially hazardous asteroid classifier
 - **MOID Prediction** (`TestMoidPredictionEndpoint`): Tests the minimum orbit intersection distance regressor
-- **Magnitude Prediction** (`TestMagnitudePredictionEndpoint`): Tests the absolute magnitude regressor
+- **Monitoring Helpers** (`test_monitoring.py`): Tests inference JSONL logging, log normalization, fake GCS uploads, drift metric extraction, and BigQuery row preparation
 
 ### Validation Tests
 
@@ -80,7 +80,6 @@ The test fixtures include realistic asteroid data based on the project's example
 
 - `VALID_PHA_FEATURES`: Features for PHA (hazard) classification
 - `VALID_MOID_FEATURES`: Features for MOID (distance) regression
-- `VALID_MAGNITUDE_FEATURES`: Features for absolute magnitude regression
 
 ## Test Organization
 

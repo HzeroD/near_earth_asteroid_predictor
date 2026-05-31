@@ -125,6 +125,7 @@ jobs:
           --region "${{ env.REGION }}" \
           --project "${{ env.PROJECT_ID }}" \
           --allow-unauthenticated
+          --set-env-vars INFERENCE_LOG_BUCKET="$MONITORING_BUCKET"
 
     - name: Show deployed service URL
       run: |
