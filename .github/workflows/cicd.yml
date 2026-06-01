@@ -14,7 +14,7 @@ env:
   SERVICE: near-earth-asteroid-predictor
   REGION: us-central1
   ARTIFACT_BUCKET: gs://project-3e6b348d-e2ae-4a47-9af_cloudbuild/artifacts
-
+#comment
 jobs:
   test:
     runs-on: ubuntu-latest
