@@ -53,7 +53,7 @@ def write_inference_event_to_gcs(event: dict) -> None:
     if not INFERENCE_LOG_BUCKET:
         return
     
-    _, log_name = INFERENCE_LOG_BUCKET.rsplit("/",1)
+    # _, log_name = INFERENCE_LOG_BUCKET.rsplit("/",1)
     model_name = event.get("model_name","unknown")
     blob_name = ""
 

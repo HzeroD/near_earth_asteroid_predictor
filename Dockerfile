@@ -2,6 +2,9 @@ FROM python:3.13-slim AS os
 
 WORKDIR /app
 
+ARG INFERENCE_LOG_BUCKET="$MONITORING_BUCKET"
+ENV INFERENCE_LOG_BUCKET="$MONITORING_BUCKET"
+
 COPY pyproject.toml README.md ./
 COPY src ./src
 COPY scripts/batch_load_inference_logs.py ./scripts/batch_load_inference_logs.py
