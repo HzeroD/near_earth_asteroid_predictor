@@ -20,7 +20,7 @@ from sklearn.linear_model import LogisticRegression, LinearRegression
 from sklearn.tree import DecisionTreeRegressor
 from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier, RandomForestRegressor, GradientBoostingRegressor
 from sklearn.model_selection import cross_val_score, StratifiedKFold, train_test_split
-from sklearn.metrics import f1_score, r2_score
+from sklearn.metrics import f1_score, r2_score, roc_auc_score
 import os
 from google.cloud import storage
 
@@ -240,7 +240,7 @@ def cross_validate_models(
     cv_results = {}
     
     # ---- PHA Classification (Stratified KFold) ----
-    logger.info("\nPHA Classification (F1 Score):")
+    logger.info("\nPHA Classification (ROC-AUC Score):")
     cv_results['pha'] = {}
     for name, pipeline in pipelines_classification.items():
         y_clean = y_train_pha.copy()
@@ -255,7 +255,7 @@ def cross_validate_models(
         scores = cross_val_score(
             pipeline, X_clean, y_clean,
             cv=stratified_kf,
-            scoring='f1_micro'
+            scoring='roc_auc'
         )
         cv_results['pha'][name] = scores
         logger.info(f"  {name:30s}: {np.mean(scores):.3f} ± {np.std(scores):.3f}")
@@ -298,9 +298,9 @@ def train_pha_model(X_train_pha, y_train_pha, X_test_pha, y_test_pha):
     
     # Evaluate on test set
     y_pred = best_model.predict(X_test_pha)
-    test_f1 = f1_score(y_test_pha, y_pred)
+    test_auc = roc_auc_score(y_test_pha, y_pred)
     
-    logger.info(f"Test set F1 score: {test_f1:.3f}")
+    logger.info(f"Test set ROC-AUC score: {test_auc:.3f}")
     
     return best_model
 
@@ -411,12 +411,12 @@ def main():
     pipelines_classification, pipelines_regression = create_model_pipelines()
     
     # Cross-validation
-    cross_validate_models(
-        X_train_pha, y_train_pha,
-        X_train_moid, y_train_moid,
-        pipelines_classification,
-        pipelines_regression
-    )
+    # cross_validate_models(
+    #     X_train_pha, y_train_pha,
+    #     X_train_moid, y_train_moid,
+    #     pipelines_classification,
+    #     pipelines_regression
+    # )
     
     # Train models
     logger.info("\n" + "="*70)
@@ -443,28 +443,25 @@ def main():
     def upload_local_directory(bucket_name, local_folder_path, gcs_folder_path=None):
         client = storage.Client()
         bucket = client.bucket(bucket_name)
+        storage.blob._MAX_MULTIPART_SIZE = 5 * 1024* 1024
 
         for root, dirs, files in os.walk(local_folder_path):
+            print("------Saving artifacts to GCP------")
             for file in files:
                 local_file_path = os.path.join(root, file)
-                print(f"local_file_path: {local_file_path}")
-
+                
                 relative_path = os.path.relpath(local_file_path, local_folder_path)
-                print(f"relative_path: {relative_path}")
                 gcs_destination = os.path.join(gcs_folder_path, relative_path ).replace("\\", "/")
-                print(f"gcs_destination: {gcs_destination}")
 
                 blob = bucket.blob(gcs_destination)
+                blob._chunk_size = 5 * 1024* 1024
                 blob.upload_from_filename(local_file_path)
-                print(f"Uploaded {file} to {gcs_destination}")
-
-
 
     upload_local_directory('project-3e6b348d-e2ae-4a47-9af_cloudbuild', ARTIFACT_PATH, 'artifacts/')
     
     logger.info("\n" + "="*70)
     logger.info("Training pipeline completed successfully!")
-    logger.info("="*70)
+    logger.info("="*70)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    
 
 
 if __name__ == "__main__":
