@@ -79,6 +79,7 @@ jobs:
     - name: Build Docker image
       run: |
         docker build -t "${{ env.GAR_LOCATION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.REPOSITORY }}/${{ env.IMAGE }}:${{ github.sha }}" \
+             --set-env-vars INFERENCE_LOG_BUCKET="$MONITORING_BUCKET" \
                      .
 
     - name: Tag main branch image as latest
@@ -119,7 +120,6 @@ jobs:
     - name: Deploy to Cloud Run
       run: |
         gcloud run deploy "${{ env.SERVICE }}" \
-          --set-env-vars INFERENCE_LOG_BUCKET="$MONITORING_BUCKET"
           --image "${{ env.GAR_LOCATION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.REPOSITORY }}/${{ env.IMAGE }}:${{ github.sha }}" \
           --platform managed \
           --region "${{ env.REGION }}" \
