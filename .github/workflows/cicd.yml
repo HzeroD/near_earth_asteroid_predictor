@@ -123,7 +123,7 @@ jobs:
           --platform managed \
           --region "${{ env.REGION }}" \
           --project "${{ env.PROJECT_ID }}" \
-          --allow-unauthenticated
+          --allow-unauthenticated 
           --set-env-vars INFERENCE_LOG_BUCKET="${{ secrets.INFERENCE_LOG_BUCKET }}"
           
 
